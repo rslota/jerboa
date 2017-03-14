@@ -8,6 +8,7 @@ defmodule Jerboa.Format.BodyTest do
   alias Jerboa.Params
   alias Jerboa.Format.Body.Attribute.Data
   alias Jerboa.Format.Meta
+  alias Jerboa.Format.MessageIntegrity, as: MI
 
   describe "Body.encode/2" do
 
@@ -66,10 +67,17 @@ defmodule Jerboa.Format.BodyTest do
       assert {:error, error} = Body.decode(%Meta{body: body})
       assert %Format.AttributeFormatError{} = error
     end
+
+    test "fails if message integrity has invalid length" do
+      length = 19
+      body = <<0x0008::16, length::16, 0::size(length)-unit(8)>>
+
+      assert {:error, %MI.FormatError{}} = Body.decode(%Meta{body: body})
+    end
   end
 
   defp known_comprehension_required do
-    [0x0020, 0x000D, 0x0013, 0x0015, 0x0006, 0x0014, 0x0009]
+    [0x0020, 0x000D, 0x0013, 0x0015, 0x0006, 0x0014, 0x0009, 0x0008]
   end
 
   defp known_comprehension_optional do
